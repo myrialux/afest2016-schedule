@@ -10,6 +10,8 @@ RETURN_VALUE_SUCCESS           = 0
 RETURN_VALUE_INVALID_PARAMETER = 1
 RETURN_VALUE_WORKBOOK_ERROR    = 2
 
+ATTENDIFY_SCHEDULE_SHEET_NAME = "Schedule"
+
 
 class AFestEvent:
     """Model object for events, whether from the AFest schedule or Attendify."""
@@ -58,13 +60,20 @@ class AFestEvent:
         return (self.date == other.date) and (self.start_time == other.start_time) and (self.end_time == other.end_time) and (self.location == other.location) and (self.title == other.title)
 
 
-def load_attendify_events(file_name):
+def open_attendify_schedule(file_name):
     wb = load_workbook(file_name)
 
-    schedule_sheet = wb["Schedule"]
+    schedule_sheet = wb[ATTENDIFY_SCHEDULE_SHEET_NAME]
     if not schedule_sheet:
         print("ERROR - Schedule sheet not found in workbook")
         sys.exit(RETURN_VALUE_WORKBOOK_ERROR)
+    
+    return wb
+
+
+def load_attendify_events(file_name):
+    wb = open_attendify_schedule(file_name)
+    schedule_sheet = wb[ATTENDIFY_SCHEDULE_SHEET_NAME]
 
     events = []
 
