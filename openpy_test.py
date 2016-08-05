@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 
+import sys
 import csv
 import re
 from openpyxl import *
@@ -126,7 +127,6 @@ def add_ids_to_attendify(args):
 
 
 def main():
-    import sys
     import argparse
 
     parser = argparse.ArgumentParser(description="Show schedule data")
