@@ -20,16 +20,6 @@ ATTENDIFY_ID_COL_INDEX = 7
 class AFestEvent:
     """Model object for events, whether from the AFest schedule or Attendify."""
 
-    title = ""
-    date = ""
-    start_time = ""
-    end_time = ""
-    desc = ""
-    location = ""
-    track = ""
-    attendify_id = None
-    afest_id = None
-
     def load_from_attendify(self, row):
         self.title = row[0].value.strip()
         self.date = row[1].value.strip()
@@ -44,6 +34,8 @@ class AFestEvent:
         match = regex.search(self.desc)
         if match:
             self.afest_id = match.group(1)
+        else:
+            self.afest_id = None
 
     def load_from_afest(self, row):
         self.title = row["Session Title"]
