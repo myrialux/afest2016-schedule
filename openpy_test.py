@@ -58,10 +58,8 @@ def load_attendify_events(file_name):
     for row in schedule_sheet.iter_rows(range_string=events_range):
         event = AFestEvent()
         event.load_from_attendify(row)
-        # print event.title
         events.append(event)
 
-    print("Total Attendify Events: " + str(len(events)))
     return events
 
 
@@ -75,9 +73,14 @@ def load_afest_events(file_name):
             event.load_from_afest(row)
             events.append(event)
 
-    print("Total A-Fest Events: " + str(len(events)))
     return events
 
+
+def add_ids_to_attendify(args):
+    afest_events = load_afest_events(args.afest_file)
+    attendify_events = load_attendify_events(args.attendify_file)
+
+    print("AFest: {0}  Attendify: {1}".format(len(afest_events), len(attendify_events)))
 
 def main():
     RETURN_VALUE_SUCCESS           = 0
@@ -88,12 +91,14 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Show schedule data")
-    parser.add_argument("attendify_file", help="Attendify .xlsx schedule")
-    parser.add_argument("afest_file", help="A-Fest .csv schedule")
-    args = parser.parse_args()
+    subparsers = parser.add_subparsers()
+    add_ids_parser = subparsers.add_parser("add_ids", help="Attempt to match AFest and Attendify events. Copy AFest IDs to matched Attendify events")
+    add_ids_parser.add_argument("afest_file", help="AFest .csv schedule")
+    add_ids_parser.add_argument("attendify_file", help="Attendify .xlsx schedule")
+    add_ids_parser.set_defaults(func=add_ids_to_attendify)
 
-    attendify_events = load_attendify_events(args.attendify_file)
-    afest_events = load_afest_events(args.afest_file)
+    args = parser.parse_args()
+    args.func(args)
 
 
 if __name__ == "__main__":
