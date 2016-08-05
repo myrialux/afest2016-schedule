@@ -6,6 +6,11 @@ import re
 from openpyxl import *
 
 
+RETURN_VALUE_SUCCESS           = 0
+RETURN_VALUE_INVALID_PARAMETER = 1
+RETURN_VALUE_WORKBOOK_ERROR    = 2
+
+
 class AFestEvent:
     title = ""
     date = ""
@@ -42,6 +47,9 @@ class AFestEvent:
         self.track = row["Track Title"]
         self.attendify_id = row["UID"]
         self.afest_id = row["id_schedule_block"]
+
+    def is_match(self, other):
+        return (self.date == other.date) and (self.start_time == other.start_time) and (self.end_time == other.end_time) and (self.location == other.location) and (self.title == other.title)
 
 
 def load_attendify_events(file_name):
@@ -82,11 +90,27 @@ def add_ids_to_attendify(args):
 
     print("AFest: {0}  Attendify: {1}".format(len(afest_events), len(attendify_events)))
 
-def main():
-    RETURN_VALUE_SUCCESS           = 0
-    RETURN_VALUE_INVALID_PARAMETER = 1
-    RETURN_VALUE_WORKBOOK_ERROR    = 2
+    matches = 0
+    title_matches = 0
+    for at_event in attendify_events:
+        matched = False
+        for af_event in afest_events:
+            if at_event.is_match(af_event):
+                matched = True
+                matches += 1
+                break
+        if matched:
+            continue
+        
+        for af_event in afest_events:
+            if at_event.title == af_event.title:
+                title_matches += 1
+                break 
+    
+    print("Matches: {0}  Title Matches: {1}".format(matches, title_matches))
 
+
+def main():
     import sys
     import argparse
 
