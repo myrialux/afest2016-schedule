@@ -13,6 +13,9 @@ RETURN_VALUE_WORKBOOK_ERROR    = 2
 
 ATTENDIFY_SCHEDULE_SHEET_NAME = "Schedule"
 
+ATTENDIFY_DESC_COL_INDEX = 4
+ATTENDIFY_ID_COL_INDEX = 7
+
 
 class AFestEvent:
     """Model object for events, whether from the AFest schedule or Attendify."""
@@ -32,12 +35,12 @@ class AFestEvent:
         self.date = row[1].value.strip()
         self.start_time = row[2].value.strip()
         self.end_time = row[3].value.strip()
-        self.desc = row[4].value.strip()
+        self.desc = row[ATTENDIFY_DESC_COL_INDEX].value.strip()
         self.location = row[5].value.strip()
-        self.track = row[6].value.strip()
-        self.attendify_id = row[7].value.strip()
+        self.track = (row[6].value or "").strip()
+        self.attendify_id = row[ATTENDIFY_ID_COL_INDEX].value.strip()
 
-        regex = re.compile(r".*{afestid:(.+)}$", re.IGNORECASE)
+        regex = re.compile(r".*\[afestid:(.+)\]$", re.IGNORECASE)
         match = regex.search(self.desc)
         if match:
             self.afest_id = match.group(1)
@@ -72,14 +75,20 @@ def open_attendify_schedule(file_name):
     return wb
 
 
+def iter_attendify_schedule_rows(sheet):
+    """Returns an iterator for the schedule rows in the given sheet."""
+
+    events_range = "A6:H" + str(sheet.max_row)
+    return sheet.iter_rows(range_string=events_range)
+
+
 def load_attendify_events(file_name):
     wb = open_attendify_schedule(file_name)
     schedule_sheet = wb[ATTENDIFY_SCHEDULE_SHEET_NAME]
 
     events = []
 
-    events_range = "A6:H" + str(schedule_sheet.max_row)
-    for row in schedule_sheet.iter_rows(range_string=events_range):
+    for row in iter_attendify_schedule_rows(schedule_sheet):
         event = AFestEvent()
         event.load_from_attendify(row)
         events.append(event)
@@ -100,30 +109,53 @@ def load_afest_events(file_name):
     return events
 
 
+def add_afest_id_to_attendify(workbook, attendify_id, afest_id):
+    schedule_sheet = workbook[ATTENDIFY_SCHEDULE_SHEET_NAME]
+
+    for row in iter_attendify_schedule_rows(schedule_sheet):
+        if row[ATTENDIFY_ID_COL_INDEX].value.strip() == attendify_id:
+            row[ATTENDIFY_DESC_COL_INDEX].value += "\n\n[afestid:{0}]".format(afest_id)
+            break
+
+
 def add_ids_to_attendify(args):
     afest_events = load_afest_events(args.afest_file)
     attendify_events = load_attendify_events(args.attendify_file)
 
     print("AFest: {0}  Attendify: {1}".format(len(afest_events), len(attendify_events)))
 
-    matches = 0
+    workbook = open_attendify_schedule(args.attendify_file)
+
+    exact_matches = 0
     title_matches = 0
     for at_event in attendify_events:
+        if at_event.afest_id:
+            continue
+
+        # Exact matches first
         matched = False
         for af_event in afest_events:
             if at_event.is_match(af_event):
+                add_afest_id_to_attendify(workbook, at_event.attendify_id, af_event.afest_id)
+
                 matched = True
-                matches += 1
+                exact_matches += 1
                 break
         if matched:
             continue
         
+        # If the event has exactly one match against the titles in the AFest schedule, use that one.
+        matched_afest_ids = []
         for af_event in afest_events:
             if at_event.title == af_event.title:
-                title_matches += 1
-                break 
+                matched_afest_ids.append(af_event.afest_id)
+        if len(matched_afest_ids) == 1:
+            add_afest_id_to_attendify(workbook, at_event.attendify_id, matched_afest_ids[0])
+            title_matches += 1
+
+    workbook.save(args.attendify_file + ".new")
     
-    print("Matches: {0}  Title Matches: {1}".format(matches, title_matches))
+    print("Exact Matches: {0}  Title Matches: {1}".format(exact_matches, title_matches))
 
 
 def main():
