@@ -158,15 +158,31 @@ def add_ids_to_attendify(args):
     print("Exact Matches: {0}  Title Matches: {1}".format(exact_matches, title_matches))
 
 
+def check_afest_ids_in_attendify(args):
+    attendify_events = load_attendify_events(args.attendify_file)
+
+    missing_ids = 0
+    for event in attendify_events:
+        if not event.afest_id:
+            missing_ids += 1
+
+    print("Total events: {0}  Missing IDs: {1}".format(len(attendify_events), missing_ids))
+
+
 def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Show schedule data")
     subparsers = parser.add_subparsers()
+
     add_ids_parser = subparsers.add_parser("add_ids", help="Attempt to match AFest and Attendify events. Copy AFest IDs to matched Attendify events")
     add_ids_parser.add_argument("afest_file", help="AFest .csv schedule")
     add_ids_parser.add_argument("attendify_file", help="Attendify .xlsx schedule")
     add_ids_parser.set_defaults(func=add_ids_to_attendify)
+
+    check_ids_parser = subparsers.add_parser("check_ids", help="Check the given Attendify schedule for missing AFest IDs.")
+    check_ids_parser.add_argument("attendify_file", help="Attendify .xlsx schedule")
+    check_ids_parser.set_defaults(func=check_afest_ids_in_attendify)
 
     args = parser.parse_args()
     args.func(args)
