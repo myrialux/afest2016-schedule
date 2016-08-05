@@ -12,6 +12,8 @@ RETURN_VALUE_WORKBOOK_ERROR    = 2
 
 
 class AFestEvent:
+    """Model object for events, whether from the AFest schedule or Attendify."""
+
     title = ""
     date = ""
     start_time = ""
@@ -49,6 +51,10 @@ class AFestEvent:
         self.afest_id = row["id_schedule_block"]
 
     def is_match(self, other):
+        """Returns whether the other event matches this one for purposes of copying the AFest ID over.
+        Not the same as an equality function, because we don't care about the track or description.
+        """
+
         return (self.date == other.date) and (self.start_time == other.start_time) and (self.end_time == other.end_time) and (self.location == other.location) and (self.title == other.title)
 
 
