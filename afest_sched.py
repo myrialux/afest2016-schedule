@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+"""
+Code and classes to handle keeping the AnimeFest 2016 app's schedule in-sync with the version from the web site.
+"""
 
 import sys
 import csv
