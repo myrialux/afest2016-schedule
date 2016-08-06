@@ -5,6 +5,7 @@ Code and classes to handle keeping the AnimeFest 2016 app's schedule in-sync wit
 """
 
 import sys
+import argparse
 import csv
 import re
 from datetime import datetime
@@ -164,19 +165,18 @@ def merge_split_events(events):
 
     by_afest_id = {}
     for event in events:
-        id_list = by_afest_id[event.afest_id]
-        if not id_list:
-            id_list = [event]
-        else:
-            id_list.append(event)
+        id_list = []
+        if by_afest_id.has_key(event.afest_id):
+            id_list = by_afest_id[event.afest_id]
+        id_list.append(event)
         by_afest_id[event.afest_id] = id_list
 
     result = []
-    for afest_id in by_afest_id.keys:
+    for afest_id in by_afest_id:
         id_list = by_afest_id[afest_id]
         if len(id_list) == 1:
             result.append(id_list[0])
-        else if len(id_list) == 2:
+        elif len(id_list) == 2:
             result.append(merge_events(id_list[0], id_list[1]))
         else:
             print("ERROR - {0} event(s) for AFest ID {1}".format(len(id_list), afest_id))
@@ -237,9 +237,24 @@ def check_afest_ids_in_attendify(args):
     print("Total events: {0}  Missing IDs: {1}".format(len(attendify_events), missing_ids))
 
 
-def main():
-    import argparse
+def diff_schedules(args):
+    if len(args.attendify_files) == 0:
+        ArgumentParser.exit(RETURN_VALUE_INVALID_PARAMETER, "ERROR - No Attendify schedules provided")
 
+    afest_events = load_afest_events(args.afest_file)
+    
+    attendify_events = []
+    for attendify_file in args.attendify_files:
+        attendify_events.extend(load_attendify_events(attendify_file))
+    original_attendify_count = len(attendify_events)
+    attendify_events = merge_split_events(attendify_events)
+
+    print("AFest Events: {0}  Attendify: {1} ({2} pre-merge)".format(len(afest_events), len(attendify_events), original_attendify_count))
+
+    # TODO - diff
+
+
+def main():
     parser = argparse.ArgumentParser(description="Show schedule data")
     subparsers = parser.add_subparsers()
 
@@ -251,6 +266,11 @@ def main():
     check_ids_parser = subparsers.add_parser("check_ids", help="Check the given Attendify schedule for missing AFest IDs.")
     check_ids_parser.add_argument("attendify_file", help="Attendify .xlsx schedule")
     check_ids_parser.set_defaults(func=check_afest_ids_in_attendify)
+
+    diff_parser = subparsers.add_parser("diff", help="Diff the AFest schedule against the schedule(s) from Attendify")
+    diff_parser.add_argument("afest_file", help="AFest .csv schedule")
+    diff_parser.add_argument("attendify_files", nargs=argparse.REMAINDER, help="One or more Attendify .xlsx schedule files")
+    diff_parser.set_defaults(func=diff_schedules)
 
     args = parser.parse_args()
     args.func(args)
