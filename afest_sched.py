@@ -53,7 +53,7 @@ class AFestEvent:
         Not the same as an equality function, because we don't care about the track or description.
         """
 
-        return (self.date == other.date) and (self.start_time == other.start_time) and (self.end_time == other.end_time) and (self.location == other.location) and (self.title == other.title)
+        return (self.date == other.date) and (self.start_time == other.start_time) and ((self.end_time == other.end_time) or (self.end_time == "23:59")) and (self.location == other.location) and (self.title == other.title)
 
 
 def open_attendify_schedule(file_name):
