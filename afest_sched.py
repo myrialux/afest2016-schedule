@@ -4,6 +4,7 @@
 import sys
 import csv
 import re
+from datetime import datetime
 from openpyxl import *
 
 
@@ -15,6 +16,8 @@ ATTENDIFY_SCHEDULE_SHEET_NAME = "Schedule"
 
 ATTENDIFY_DESC_COL_INDEX = 4
 ATTENDIFY_ID_COL_INDEX = 7
+
+ATTENDIFY_DATE_FORMAT = "%m/%d/%Y"
 
 
 class AFestEvent:
@@ -53,7 +56,18 @@ class AFestEvent:
         Not the same as an equality function, because we don't care about the track or description.
         """
 
-        return (self.date == other.date) and (self.start_time == other.start_time) and ((self.end_time == other.end_time) or (self.end_time == "23:59")) and (self.location == other.location) and (self.title == other.title)
+        # Common checks first
+        if (self.title != other.title) or (self.location != other.location):
+            return False
+
+        if (self.date == other.date):
+            # If the days match then the start time needs to, and the end time either needs to match, or needs to be the end of the day. This helps with the first portion of events split over midnight.
+            return (self.start_time == other.start_time) and ((self.end_time == other.end_time) or (self.end_time == "23:59"))
+        else:
+            # If this event is on the day after the other one, starts at midnight, and its end time matches, then this is the second part of a split-over-midnight event.
+            thisDate = datetime.strptime(self.date, ATTENDIFY_DATE_FORMAT)
+            otherDate = datetime.strptime(other.date, ATTENDIFY_DATE_FORMAT)
+            return ((thisDate - otherDate).days == 1) and (self.start_time == "00:00") and (self.end_time == other.end_time)
 
 
 def open_attendify_schedule(file_name):
