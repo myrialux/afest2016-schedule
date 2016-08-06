@@ -81,8 +81,7 @@ def open_attendify_schedule(file_name):
 
     schedule_sheet = wb[ATTENDIFY_SCHEDULE_SHEET_NAME]
     if not schedule_sheet:
-        print("ERROR - Schedule sheet not found in workbook")
-        sys.exit(RETURN_VALUE_WORKBOOK_ERROR)
+        ArgumentParser.exit(RETURN_VALUE_WORKBOOK_ERROR, "ERROR - Schedule sheet not found in workbook")
     
     return wb
 
@@ -132,8 +131,7 @@ def add_afest_id_to_attendify(workbook, attendify_id, afest_id):
 
 def merge_events(event1, event2):
     if event1.date == event2.date:
-        print("ERROR - Events to merge share the same date ({0}) - \"{1}\" and \"{2}\"".format(event1.date, event1.title, event2.title))
-        sys.exit(RETURN_VALUE_SPLIT_EVENTS_SAME_DAY)
+        ArgumentParser.exit(RETURN_VALUE_SPLIT_EVENTS_SAME_DAY, "ERROR - Events to merge share the same date ({0}) - \"{1}\" and \"{2}\"".format(event1.date, event1.title, event2.title))
 
     date1 = datetime.strptime(event1.date, ATTENDIFY_DATE_FORMAT)
     date2 = datetime.strptime(event2.date, ATTENDIFY_DATE_FORMAT)
@@ -179,8 +177,7 @@ def merge_split_events(events):
         elif len(id_list) == 2:
             result.append(merge_events(id_list[0], id_list[1]))
         else:
-            print("ERROR - {0} event(s) for AFest ID {1}".format(len(id_list), afest_id))
-            sys.exit(RETURN_VALUE_EXCESSIVE_ID_USE)
+            ArgumentParser.exit(RETURN_VALUE_EXCESSIVE_ID_USE, "ERROR - {0} event(s) for AFest ID {1}".format(len(id_list), afest_id))
     
     return result
 
