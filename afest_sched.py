@@ -41,15 +41,15 @@ class AFestEvent:
             self.afest_id = None
 
     def load_from_afest(self, row):
-        self.title = row["Session Title"]
-        self.date = row["Date"]
-        self.start_time = row["Start Time"]
-        self.end_time = row["End Time"]
-        self.desc = row["Description"]
-        self.location = row["Location"]
-        self.track = row["Track Title"]
-        self.attendify_id = row["UID"]
-        self.afest_id = row["id_schedule_block"]
+        self.title = row["Session Title"].strip()
+        self.date = row["Date"].strip()
+        self.start_time = row["Start Time"].strip()
+        self.end_time = row["End Time"].strip()
+        self.desc = row["Description"].strip()
+        self.location = row["Location"].strip()
+        self.track = row["Track Title"].strip()
+        self.attendify_id = row["UID"].strip()
+        self.afest_id = row["id_schedule_block"].strip()
 
     def is_match(self, other):
         """Returns whether the other event matches this one for purposes of copying the AFest ID over.
