@@ -11,9 +11,11 @@ from datetime import datetime
 from openpyxl import *
 
 
-RETURN_VALUE_SUCCESS           = 0
-RETURN_VALUE_INVALID_PARAMETER = 1
-RETURN_VALUE_WORKBOOK_ERROR    = 2
+RETURN_VALUE_SUCCESS               = 0
+RETURN_VALUE_INVALID_PARAMETER     = 1
+RETURN_VALUE_WORKBOOK_ERROR        = 2
+RETURN_VALUE_EXCESSIVE_ID_USE      = 3
+RETURN_VALUE_SPLIT_EVENTS_SAME_DAY = 4
 
 ATTENDIFY_SCHEDULE_SHEET_NAME = "Schedule"
 
@@ -125,6 +127,62 @@ def add_afest_id_to_attendify(workbook, attendify_id, afest_id):
         if row[ATTENDIFY_ID_COL_INDEX].value.strip() == attendify_id:
             row[ATTENDIFY_DESC_COL_INDEX].value += "\n\n[afestid:{0}]".format(afest_id)
             break
+
+
+def merge_events(event1, event2):
+    if event1.date == event2.date:
+        print("ERROR - Events to merge share the same date ({0}) - \"{1}\" and \"{2}\"".format(event1.date, event1.title, event2.title))
+        sys.exit(RETURN_VALUE_SPLIT_EVENTS_SAME_DAY)
+
+    date1 = datetime.strptime(event1.date, ATTENDIFY_DATE_FORMAT)
+    date2 = datetime.strptime(event2.date, ATTENDIFY_DATE_FORMAT)
+
+    if date1 < date2:
+        startEvent = event1
+        endEvent = event2
+    else:
+        startEvent = event2
+        endEvent = event1
+
+    result = AFestEvent()
+    result.title = startEvent.title
+    result.date = startEvent.date
+    result.start_time = startEvent.start_time
+    result.end_time = endEvent.end_time
+    result.desc = startEvent.desc
+    result.location = startEvent.location
+    result.track = startEvent.track
+    result.attendify_id = startEvent.attendify_id
+    result.afest_id = startEvent.afest_id
+    return result
+
+
+def merge_split_events(events):
+    """Takes the given list of events and returns a new list with all events that were split across midnight merged into a single event with the proper start and end time.
+    The date field of merged events is the date of the start of the event.
+    """
+
+    by_afest_id = {}
+    for event in events:
+        id_list = by_afest_id[event.afest_id]
+        if not id_list:
+            id_list = [event]
+        else:
+            id_list.append(event)
+        by_afest_id[event.afest_id] = id_list
+
+    result = []
+    for afest_id in by_afest_id.keys:
+        id_list = by_afest_id[afest_id]
+        if len(id_list) == 1:
+            result.append(id_list[0])
+        else if len(id_list) == 2:
+            result.append(merge_events(id_list[0], id_list[1]))
+        else:
+            print("ERROR - {0} event(s) for AFest ID {1}".format(len(id_list), afest_id))
+            sys.exit(RETURN_VALUE_EXCESSIVE_ID_USE)
+    
+    return result
 
 
 def add_ids_to_attendify(args):
