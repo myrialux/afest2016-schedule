@@ -170,6 +170,7 @@ def check_afest_ids_in_attendify(args):
     missing_ids = 0
     for event in attendify_events:
         if not event.afest_id:
+            print("{0}: {1} {2}-{3} {4}".format(event.title, event.date, event.start_time, event.end_time, event.location))
             missing_ids += 1
 
     print("Total events: {0}  Missing IDs: {1}".format(len(attendify_events), missing_ids))
