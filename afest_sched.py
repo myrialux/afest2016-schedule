@@ -237,21 +237,27 @@ def check_afest_ids_in_attendify(args):
     print("Total events: {0}  Missing IDs: {1}".format(len(attendify_events), missing_ids))
 
 
+def diff_event_lists(left, right):
+    pass
+
+
 def diff_schedules(args):
     if len(args.attendify_files) == 0:
         ArgumentParser.exit(RETURN_VALUE_INVALID_PARAMETER, "ERROR - No Attendify schedules provided")
 
     afest_events = load_afest_events(args.afest_file)
-    
+    afest_events.sort(cmp=lambda l,r: cmp(l.afest_id, r.afest_id))
+
     attendify_events = []
     for attendify_file in args.attendify_files:
         attendify_events.extend(load_attendify_events(attendify_file))
     original_attendify_count = len(attendify_events)
     attendify_events = merge_split_events(attendify_events)
+    attendify_events.sort(cmp=lambda l,r: cmp(l.afest_id, r.afest_id))
 
     print("AFest Events: {0}  Attendify: {1} ({2} pre-merge)".format(len(afest_events), len(attendify_events), original_attendify_count))
 
-    # TODO - diff
+    diff_event_lists(attendify_events, afest_events)
 
 
 def main():
