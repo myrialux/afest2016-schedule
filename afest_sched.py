@@ -25,6 +25,11 @@ ATTENDIFY_ID_COL_INDEX = 7
 
 ATTENDIFY_DATE_FORMAT = "%m/%d/%Y"
 
+DIFF_KEY_ADDED = "added"
+DIFF_KEY_DELETED = "deleted"
+DIFF_KEY_CHANGED = "changed"
+DIFF_KEY_MATCHED = "matched"
+
 
 class AFestEvent:
     """Model object for events, whether from the AFest schedule or Attendify."""
@@ -39,10 +44,15 @@ class AFestEvent:
         self.track = (row[6].value or "").strip()
         self.attendify_id = row[ATTENDIFY_ID_COL_INDEX].value.strip()
 
-        regex = re.compile(r".*\[afestid:(.+)\]$", re.IGNORECASE)
+        regex = re.compile(r".*(\[afestid:(.+)\])$", re.IGNORECASE)
         match = regex.search(self.desc)
         if match:
-            self.afest_id = match.group(1)
+            self.afest_id = match.group(2)
+
+            # Trim the AFest ID so the Attendify event's desc matches
+            full_id_str = match.group(1)
+            trimmed_desc = self.desc[:-len(full_id_str)].strip()
+            self.desc = trimmed_desc
         else:
             self.afest_id = None
 
@@ -235,7 +245,64 @@ def check_afest_ids_in_attendify(args):
 
 
 def diff_event_lists(left, right):
-    pass
+    """Does the actual diff between the left (old, Attendify) and right (new, AFest) schedules. Returns a dictionary of event objects with keys to lists of added, deleted, changed, and matched items.
+    In the case of changed items, each entry is a tuple where the first item is the old event and the second the new event.
+    N.B. - The lists must be sorted by AFest ID before the call to this function.
+    Went with indexes instead of Python iterators because the all the one-line try..catch blocks were getting ugly.
+    """
+
+    result = {DIFF_KEY_ADDED: [], DIFF_KEY_DELETED: [], DIFF_KEY_CHANGED: {}, DIFF_KEY_MATCHED: []}
+
+    left_index = 0
+    right_index = 0
+    while (left_index < len(left)) and (right_index < len(right)):
+        current_left = left[left_index]
+        current_right = right[right_index]
+
+        if (current_left.afest_id < current_right.afest_id):
+            result[DIFF_KEY_DELETED].append(current_left)
+
+            left_index += 1
+        elif (current_left.afest_id > current_right.afest_id):
+            result[DIFF_KEY_ADDED].append(current_right)
+
+            right_index += 1
+        else:
+            changes = {}
+            if current_left.date != current_right.date:
+                changes["date"] = (current_left.date, current_right.date)
+            if current_left.start_time != current_right.start_time:
+                changes["start_time"] = (current_left.start_time, current_right.start_time)
+            if current_left.end_time != current_right.end_time:
+                changes["end_time"] = (current_left.end_time, current_right.end_time)
+            if current_left.title != current_right.title:
+                changes["title"] = (current_left.title, current_right.title)
+            if current_left.location != current_right.location:
+                changes["location"] = (current_left.location, current_right.location)
+            # if current_left.desc != current_right.desc:
+            #     changes["desc"] = (current_left.desc, current_right.desc)
+            if current_left.track != current_right.track:
+                changes["track"] = (current_left.track, current_right.track)
+
+            if len(changes) > 0:
+                result[DIFF_KEY_CHANGED][current_left.afest_id] = changes
+            else:
+                result[DIFF_KEY_MATCHED].append(current_left)
+
+            left_index += 1
+            right_index += 1
+
+    # Remaining items in the left list have been deleted
+    while (left_index < len(left)):
+        result[DIFF_KEY_DELETED].append(current_left)
+        left_index += 1
+    
+    # Remaining items in the right list are new
+    while (right_index < len(right)):
+        result[DIFF_KEY_ADDED].append(current_right)
+        right_index += 1
+
+    return result
 
 
 def diff_schedules(args):
@@ -245,6 +312,7 @@ def diff_schedules(args):
     afest_events = load_afest_events(args.afest_file)
     afest_events.sort(cmp=lambda l,r: cmp(l.afest_id, r.afest_id))
 
+    # Cat all the Attendify events together
     attendify_events = []
     for attendify_file in args.attendify_files:
         attendify_events.extend(load_attendify_events(attendify_file))
@@ -254,7 +322,10 @@ def diff_schedules(args):
 
     print("AFest Events: {0}  Attendify: {1} ({2} pre-merge)".format(len(afest_events), len(attendify_events), original_attendify_count))
 
-    diff_event_lists(attendify_events, afest_events)
+    deltas = diff_event_lists(attendify_events, afest_events)
+    print("Added: {0}  Deleted: {1}  Changed: {2}  Matched: {3}".format(len(deltas[DIFF_KEY_ADDED]), len(deltas[DIFF_KEY_DELETED]), len(deltas[DIFF_KEY_CHANGED]), len(deltas[DIFF_KEY_MATCHED])))
+    for c in deltas[DIFF_KEY_CHANGED]:
+        print("{0}: {1}".format(c, deltas[DIFF_KEY_CHANGED][c]))
 
 
 def main():
