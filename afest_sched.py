@@ -8,6 +8,7 @@ import sys
 import argparse
 import csv
 import re
+import unicodedata
 from datetime import datetime
 from openpyxl import *
 
@@ -40,6 +41,7 @@ class AFestEvent:
         self.start_time = row[2].value.strip()
         self.end_time = row[3].value.strip()
         self.desc = row[ATTENDIFY_DESC_COL_INDEX].value.strip()
+        self.desc = re.sub("&nbsp;", " ", self.desc)
         self.location = row[5].value.strip()
         self.track = (row[6].value or "").strip()
         self.attendify_id = row[ATTENDIFY_ID_COL_INDEX].value.strip()
@@ -65,6 +67,8 @@ class AFestEvent:
             # Treat ending at midnight as just before, to help match with Attendify
             self.end_time = "23:59"
         self.desc = unicode(row["Description"], "utf-8").strip()
+        # Unicode quotes show up all over the place
+        self.desc = self.desc.replace(u"\u2019", "'")
         self.location = row["Location"].strip()
         self.track = row["Track Title"].strip()
         self.attendify_id = row["UID"].strip()
@@ -282,10 +286,10 @@ def diff_event_lists(left, right):
                 changes["title"] = (current_left.title, current_right.title)
             if current_left.location != current_right.location:
                 changes["location"] = (current_left.location, current_right.location)
-            ascii_left_desc = current_left.desc.encode("ascii", "ignore")
-            ascii_right_desc = current_right.desc.encode("ascii", "ignore")
-            if ascii_left_desc != ascii_right_desc:
-                changes["desc"] = (ascii_left_desc, ascii_right_desc)
+            norm_left_desc = unicodedata.normalize("NFKC", current_left.desc)
+            norm_right_desc = unicodedata.normalize("NFKC", current_right.desc)
+            if norm_left_desc != norm_right_desc:
+                changes["desc"] = (norm_left_desc, norm_right_desc)
             if current_left.track != current_right.track:
                 changes["track"] = (current_left.track, current_right.track)
 
