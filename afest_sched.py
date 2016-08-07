@@ -33,7 +33,7 @@ DIFF_KEY_MATCHED = "matched"
 
 
 # Common substitutions to cope with unicode
-AFEST_DESC_SUBS = [(u"\u2019", "'"), (u"\u2014", "-")]
+AFEST_DESC_SUBS = [(u"\u2019", "'"), (u"\u2014", "-"), (u"\u201c", "\""), (u"\u201d", "\""), (u"\u2013", "-"), (u"\u2011", "-"), (u"\u2122", "(TM)"), (u"\u0219", "s"), (u"\u2018", "'"), (u"\u2026", "..."), (u"\u00a0", " "), (u"\u000b", " ")]
 
 
 class AFestEvent:
@@ -290,8 +290,8 @@ def diff_event_lists(left, right):
                 changes["title"] = (current_left.title, current_right.title)
             if current_left.location != current_right.location:
                 changes["location"] = (current_left.location, current_right.location)
-            norm_left_desc = unicodedata.normalize("NFKC", current_left.desc)
-            norm_right_desc = unicodedata.normalize("NFKC", current_right.desc)
+            norm_left_desc = unicodedata.normalize("NFC", current_left.desc)
+            norm_right_desc = unicodedata.normalize("NFC", current_right.desc)
             if norm_left_desc != norm_right_desc:
                 changes["desc"] = (norm_left_desc, norm_right_desc)
             if current_left.track != current_right.track:
@@ -365,7 +365,7 @@ def diff_schedules(args):
 
         for c in deltas[DIFF_KEY_CHANGED]:
             afest_event = filter(lambda x: x.afest_id == c, afest_events)[0]
-            print("{0}, {1}, {2} {3}-{4} : {5}".format(c, afest_event.title, afest_event.date, afest_event.start_time, afest_event.end_time, deltas[DIFF_KEY_CHANGED][c]))
+            print("{0}, {1}, {2} {3}-{4}, {5} : {6}".format(c, afest_event.title, afest_event.date, afest_event.start_time, afest_event.end_time, afest_event.location, deltas[DIFF_KEY_CHANGED][c]))
         print("")
 
 
