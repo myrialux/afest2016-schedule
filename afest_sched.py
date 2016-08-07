@@ -339,6 +339,15 @@ def diff_schedules(args):
 
         print("")
 
+    if (len(deltas[DIFF_KEY_DELETED]) > 0):
+        print("Deleted")
+        print("-------")
+
+        for d in deltas[DIFF_KEY_DELETED]:
+            print("{0}, {1}, {2}, {3}-{4}, {5}".format(d.afest_id, d.title, d.date, d.start_time, d.end_time, d.location))
+
+        print("")
+
     if (len(deltas[DIFF_KEY_CHANGED]) > 0):
         print("Changed")
         print("-------")
