@@ -64,7 +64,7 @@ class AFestEvent:
         if self.end_time == "00:00":
             # Treat ending at midnight as just before, to help match with Attendify
             self.end_time = "23:59"
-        self.desc = row["Description"].strip()
+        self.desc = unicode(row["Description"], "utf-8").strip()
         self.location = row["Location"].strip()
         self.track = row["Track Title"].strip()
         self.attendify_id = row["UID"].strip()
@@ -282,8 +282,10 @@ def diff_event_lists(left, right):
                 changes["title"] = (current_left.title, current_right.title)
             if current_left.location != current_right.location:
                 changes["location"] = (current_left.location, current_right.location)
-            # if current_left.desc != current_right.desc:
-            #     changes["desc"] = (current_left.desc, current_right.desc)
+            ascii_left_desc = current_left.desc.encode("ascii", "ignore")
+            ascii_right_desc = current_right.desc.encode("ascii", "ignore")
+            if ascii_left_desc != ascii_right_desc:
+                changes["desc"] = (ascii_left_desc, ascii_right_desc)
             if current_left.track != current_right.track:
                 changes["track"] = (current_left.track, current_right.track)
 
