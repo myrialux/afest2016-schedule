@@ -329,6 +329,7 @@ def diff_schedules(args):
 
     deltas = diff_event_lists(attendify_events, afest_events)
     print("Added: {0}  Deleted: {1}  Changed: {2}  Matched: {3}".format(len(deltas[DIFF_KEY_ADDED]), len(deltas[DIFF_KEY_DELETED]), len(deltas[DIFF_KEY_CHANGED]), len(deltas[DIFF_KEY_MATCHED])))
+    print("")
 
     if (len(deltas[DIFF_KEY_ADDED]) > 0):
         print("Added")
