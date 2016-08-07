@@ -61,6 +61,9 @@ class AFestEvent:
         self.date = row["Date"].strip()
         self.start_time = row["Start Time"].strip()
         self.end_time = row["End Time"].strip()
+        if self.end_time == "00:00":
+            # Treat ending at midnight as just before, to help match with Attendify
+            self.end_time = "23:59"
         self.desc = row["Description"].strip()
         self.location = row["Location"].strip()
         self.track = row["Track Title"].strip()
@@ -325,7 +328,8 @@ def diff_schedules(args):
     deltas = diff_event_lists(attendify_events, afest_events)
     print("Added: {0}  Deleted: {1}  Changed: {2}  Matched: {3}".format(len(deltas[DIFF_KEY_ADDED]), len(deltas[DIFF_KEY_DELETED]), len(deltas[DIFF_KEY_CHANGED]), len(deltas[DIFF_KEY_MATCHED])))
     for c in deltas[DIFF_KEY_CHANGED]:
-        print("{0}: {1}".format(c, deltas[DIFF_KEY_CHANGED][c]))
+        afest_event = filter(lambda x: x.afest_id == c, afest_events)[0]
+        print("{0}, {1}, {2} {3}-{4} : {5}".format(c, afest_event.title, afest_event.date, afest_event.start_time, afest_event.end_time, deltas[DIFF_KEY_CHANGED][c]))
 
 
 def main():
