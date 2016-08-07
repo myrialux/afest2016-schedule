@@ -297,11 +297,13 @@ def diff_event_lists(left, right):
 
     # Remaining items in the left list have been deleted
     while (left_index < len(left)):
+        current_left = left[left_index]
         result[DIFF_KEY_DELETED].append(current_left)
         left_index += 1
     
     # Remaining items in the right list are new
     while (right_index < len(right)):
+        current_right = right[right_index]
         result[DIFF_KEY_ADDED].append(current_right)
         right_index += 1
 
@@ -327,9 +329,24 @@ def diff_schedules(args):
 
     deltas = diff_event_lists(attendify_events, afest_events)
     print("Added: {0}  Deleted: {1}  Changed: {2}  Matched: {3}".format(len(deltas[DIFF_KEY_ADDED]), len(deltas[DIFF_KEY_DELETED]), len(deltas[DIFF_KEY_CHANGED]), len(deltas[DIFF_KEY_MATCHED])))
-    for c in deltas[DIFF_KEY_CHANGED]:
-        afest_event = filter(lambda x: x.afest_id == c, afest_events)[0]
-        print("{0}, {1}, {2} {3}-{4} : {5}".format(c, afest_event.title, afest_event.date, afest_event.start_time, afest_event.end_time, deltas[DIFF_KEY_CHANGED][c]))
+
+    if (len(deltas[DIFF_KEY_ADDED]) > 0):
+        print("Added")
+        print("-----")
+
+        for a in deltas[DIFF_KEY_ADDED]:
+            print("{0}, {1}, {2}, {3}-{4}, {5}, {6}".format(a.afest_id, a.title, a.date, a.start_time, a.end_time, a.location, a.track))
+
+        print("")
+
+    if (len(deltas[DIFF_KEY_CHANGED]) > 0):
+        print("Changed")
+        print("-------")
+
+        for c in deltas[DIFF_KEY_CHANGED]:
+            afest_event = filter(lambda x: x.afest_id == c, afest_events)[0]
+            print("{0}, {1}, {2} {3}-{4} : {5}".format(c, afest_event.title, afest_event.date, afest_event.start_time, afest_event.end_time, deltas[DIFF_KEY_CHANGED][c]))
+        print("")
 
 
 def main():
