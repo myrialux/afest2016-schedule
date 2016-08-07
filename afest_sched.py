@@ -32,6 +32,10 @@ DIFF_KEY_CHANGED = "changed"
 DIFF_KEY_MATCHED = "matched"
 
 
+# Common substitutions to cope with unicode
+AFEST_DESC_SUBS = [(u"\u2019", "'"), (u"\u2014", "-")]
+
+
 class AFestEvent:
     """Model object for events, whether from the AFest schedule or Attendify."""
 
@@ -67,8 +71,8 @@ class AFestEvent:
             # Treat ending at midnight as just before, to help match with Attendify
             self.end_time = "23:59"
         self.desc = unicode(row["Description"], "utf-8").strip()
-        # Unicode quotes show up all over the place
-        self.desc = self.desc.replace(u"\u2019", "'")
+        for sub in AFEST_DESC_SUBS:
+            self.desc = self.desc.replace(sub[0], sub[1])
         self.location = row["Location"].strip()
         self.track = row["Track Title"].strip()
         self.attendify_id = row["UID"].strip()
