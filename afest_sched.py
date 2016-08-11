@@ -46,6 +46,7 @@ class AFestEvent:
         self.end_time = row[3].value.strip()
         self.desc = row[ATTENDIFY_DESC_COL_INDEX].value.strip()
         self.desc = re.sub("&nbsp;", " ", self.desc)
+        self.desc = re.sub("<br>", " ", self.desc)
         self.location = row[5].value.strip()
         self.track = (row[6].value or "").strip()
         self.attendify_id = row[ATTENDIFY_ID_COL_INDEX].value.strip()
@@ -346,7 +347,7 @@ def diff_schedules(args):
         print("-----")
 
         for a in deltas[DIFF_KEY_ADDED]:
-            print("{0}, {1}, {2}, {3}-{4}, {5}, {6}".format(a.afest_id, a.title, a.date, a.start_time, a.end_time, a.location, a.track))
+            print("{0}, {1}, {2}, {3}-{4}, {5}, {6}: {7}".format(a.afest_id, a.title, a.date, a.start_time, a.end_time, a.location, a.track, a.desc))
 
         print("")
 
