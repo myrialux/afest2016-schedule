@@ -46,7 +46,7 @@ class AFestEvent:
         self.end_time = row[3].value.strip()
         self.desc = row[ATTENDIFY_DESC_COL_INDEX].value.strip()
         self.desc = re.sub("&nbsp;", " ", self.desc)
-        self.desc = re.sub("<br>", " ", self.desc)
+        self.desc = re.sub("<br>", "", self.desc)
         self.location = row[5].value.strip()
         self.track = (row[6].value or "").strip()
         self.attendify_id = row[ATTENDIFY_ID_COL_INDEX].value.strip()
